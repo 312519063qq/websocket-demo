@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
+<head lang="en">
+    <meta charset="UTF-8" />
+    <title>websocket demo</title>
+</head>
+<body>
+<h2 >二维码 :</h2>
+<div id="qrcode_id"></div>
+<script type="text/javascript" src="//static.runoob.com/assets/qrcode/qrcode.min.js"></script>
+<script src="https://cdn.bootcss.com/jquery/1.12.1/jquery.js"></script>
+<script type="application/javascript">
+    var websocket = null;
+    var message ='[{\n' +
+        '\t"type":"CreateQRcode",\n' +
+        '\t  "message":"uuid"\n' +
+        '}]';
+
+    $(function () {
+        if ('WebSocket' in window) {
+            websocket = new WebSocket('ws://localhost:8080/webSocket');
+        } else {
+            alert('该浏览器不支持websocket');
+        }
+        websocket.onopen = function (event) {
+            console.log('websocket建立连接');
+        }
+        websocket.onmessage = function (event) {
+            console.log('websocket收到消息' + event.data);
+            var result = $.parseJSON(event.data);
+            if(result.type=="Connection"){
+                console.log("连接成功 获取二维码")
+                getQRCode(message)
+            }else if(result.type=="GetQRcode"){
+                console.log("拿到二维码 展示")
+                new QRCode(document.getElementById("qrcode_id"), result.message);
+            } else if(result.type=="Login"){
+                console.log(result.message)
+                alert(result.message);
+            }
+        }
+
+        websocket.onerror = function (event) {
+            console.log('websocket通信发生错误');
+
+        }
+
+
+
+        window.onbeforeunload = function (event) {
+            websocket.close();
+        }
+
+        websocket.onclose = function (event) {
+            console.log('websocket关闭连接');
+        }
+
+    });
+
+    function getQRCode(message) {
+        sendmessage(message);
+    }
+
+    function sendmessage(message) {
+        websocket.send(message);
+    }
+</script>
+
+</body>
+
